@@ -1,6 +1,5 @@
 import requests
 import datetime
-import math
 import os
 from send_sms import send_sms
 
@@ -23,6 +22,23 @@ strDAY_Neg1 = DAY_Neg1.strftime("%Y-%m-%d")    # Convert to YY-MM-DD format
 
 stock_data_API_Key = os.environ["ALPHAVANTAGE_API_AUTH_TOKEN"]
 stock_data_endpoint = "https://www.alphavantage.co/query"
+
+stock_list_data_parameters = {
+    "function": "LISTING_STATUS",
+    "state": "active",
+    "apikey": stock_data_API_Key
+}
+
+bespoke_endpoint = f"{stock_data_endpoint}?function={stock_list_data_parameters['function']}&state={stock_list_data_parameters['state']}&apikey={stock_list_data_parameters['apikey']}"
+
+response = requests.get(url=bespoke_endpoint)
+response.raise_for_status()
+
+stock_list_data = response.content
+
+# Intention was to use the stock_list_data to loop through the stocks to find one that had greater than 5% movement
+# download is in csv rather than json format.
+# Took a while to figure this out, so used response.content rather than response.json() for data
 
 
 stock_data_parameters = {
@@ -51,7 +67,7 @@ if pct_movement > 0:
 elif pct_movement < 0:
     str_pct_movement_arrow = DOWN_ARROW
 else:
-    pct_movement = NO_MOVE_ARROW
+    str_pct_movement_arrow = NO_MOVE_ARROW
 if abs(pct_movement) >= PCT_DIFF_INDICATOR:
     print("Get News")
 
@@ -83,6 +99,7 @@ print(news_data)
 # Article Count Variable
 article_count = 0
 news_source = ""
+msg_text = ""
 for ix in range(len(news_data)):
     if len(news_source) != 0:
         if news_data[ix]["source"]["name"] == news_source:
